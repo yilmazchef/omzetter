@@ -252,24 +252,6 @@ public class UploadView extends Div implements BeforeEnterObserver {
         wrapper.add(grid);
     }
 
-    private void attachImageUpload(com.vaadin.flow.component.upload.Upload upload, Image preview) {
-        ByteArrayOutputStream uploadBuffer = new ByteArrayOutputStream();
-        upload.setAcceptedFileTypes("image/*");
-        upload.setReceiver((fileName, mimeType) -> {
-            return uploadBuffer;
-        });
-        upload.addSucceededListener(e -> {
-            String mimeType = e.getMIMEType();
-            String base64ImageData = Base64.getEncoder().encodeToString(uploadBuffer.toByteArray());
-            String dataUrl = "data:" + mimeType + ";base64,"
-                    + UriUtils.encodeQuery(base64ImageData, StandardCharsets.UTF_8);
-            upload.getElement().setPropertyJson("files", Json.createArray());
-            preview.setSrc(dataUrl);
-            uploadBuffer.reset();
-        });
-        preview.setVisible(false);
-    }
-
     private void refreshGrid() {
         grid.select(null);
         grid.getLazyDataView().refreshAll();

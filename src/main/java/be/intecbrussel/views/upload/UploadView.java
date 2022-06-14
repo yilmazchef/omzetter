@@ -21,7 +21,6 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.converter.StringToIntegerConverter;
@@ -61,8 +60,7 @@ public class UploadView extends Div implements BeforeEnterObserver {
     private DateTimePicker createdAt;
     private DateTimePicker updatedAt;
     private DateTimePicker expiresAt;
-    private Upload content;
-    private Image contentPreview;
+    private com.vaadin.flow.component.upload.Upload content;
     private TextField accessCode;
     private Checkbox isActive;
     private TextField downloadCount;
@@ -78,6 +76,7 @@ public class UploadView extends Div implements BeforeEnterObserver {
 
     @Autowired
     public UploadView(UploadService uploadService) {
+
         this.uploadService = uploadService;
         addClassNames("upload-view");
 
@@ -137,7 +136,24 @@ public class UploadView extends Div implements BeforeEnterObserver {
 
         binder.bindInstanceFields(this);
 
-        attachImageUpload(content, contentPreview);
+        ByteArrayOutputStream uploadBuffer = new ByteArrayOutputStream();
+        this.content.setAcceptedFileTypes("image/*");
+        this.content.setReceiver((fileName, mimeType) -> {
+            return uploadBuffer;
+        });
+
+        this.content.addSucceededListener(e -> {
+            String mimeType = e.getMIMEType();
+
+            // TODO: data must be converted here.
+            String base64ImageData = Base64.getEncoder().encodeToString(uploadBuffer.toByteArray());
+            String dataUrl = "data:" + mimeType + ";base64,"
+                    + UriUtils.encodeQuery(base64ImageData, StandardCharsets.UTF_8);
+            this.content.getElement().setPropertyJson("files", Json.createArray());
+            Notification.show("Data is uploaded. Temp download link:" + dataUrl, 3000, Notification.Position.MIDDLE)
+                    .open();
+            uploadBuffer.reset();
+        });
 
         cancel.addClickListener(e -> {
             clearForm();
@@ -150,7 +166,7 @@ public class UploadView extends Div implements BeforeEnterObserver {
                     this.upload = new Upload();
                 }
                 binder.writeBean(this.upload);
-                this.upload.setContent(contentPreview.getSrc());
+                this.upload.setContent(uploadBuffer.toByteArray());
 
                 uploadService.update(this.upload);
                 clearForm();
@@ -202,16 +218,16 @@ public class UploadView extends Div implements BeforeEnterObserver {
         expiresAt = new DateTimePicker("Expires At");
         expiresAt.setStep(Duration.ofSeconds(1));
         Label contentLabel = new Label("Content");
-        contentPreview = new Image();
-        contentPreview.setWidth("100%");
-        content = new Upload();
+        content = new com.vaadin.flow.component.upload.Upload();
         content.getStyle().set("box-sizing", "border-box");
-        content.getElement().appendChild(contentPreview.getElement());
+        content.getElement().appendChild(new Label("The file is uploaded to the server and is available. "
+                + "The temporary download link is shown below.").getElement());
         accessCode = new TextField("Access Code");
         isActive = new Checkbox("Is Active");
         downloadCount = new TextField("Download Count");
-        Component[] fields = new Component[]{filename, extension, createdBy, updatedBy, createdAt, updatedAt, expiresAt,
-                contentLabel, content, accessCode, isActive, downloadCount};
+        Component[] fields = new Component[] { filename, extension, createdBy, updatedBy, createdAt, updatedAt,
+                expiresAt,
+                contentLabel, content, accessCode, isActive, downloadCount };
 
         formLayout.add(fields);
         editorDiv.add(formLayout);
@@ -236,7 +252,7 @@ public class UploadView extends Div implements BeforeEnterObserver {
         wrapper.add(grid);
     }
 
-    private void attachImageUpload(Upload upload, Image preview) {
+    private void attachImageUpload(com.vaadin.flow.component.upload.Upload upload, Image preview) {
         ByteArrayOutputStream uploadBuffer = new ByteArrayOutputStream();
         upload.setAcceptedFileTypes("image/*");
         upload.setReceiver((fileName, mimeType) -> {
@@ -266,12 +282,5 @@ public class UploadView extends Div implements BeforeEnterObserver {
     private void populateForm(Upload value) {
         this.upload = value;
         binder.readBean(this.upload);
-        this.contentPreview.setVisible(value != null);
-        if (value == null) {
-            this.contentPreview.setSrc("");
-        } else {
-            this.contentPreview.setSrc(value.getContent());
-        }
-
     }
 }

@@ -1,0 +1,19 @@
+version: "3.9"
+services:
+
+  app:
+    build: .
+    ports:
+      - "8080"
+    networks:
+      - devnet
+    volumes:
+      - devvol:/var/lib/omzetter
+
+networks:
+  pronet:
+  devnet:
+
+
+volumes:
+  devvol: {}

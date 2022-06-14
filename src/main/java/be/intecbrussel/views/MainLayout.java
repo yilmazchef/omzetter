@@ -4,6 +4,7 @@ import be.intecbrussel.data.entity.User;
 import be.intecbrussel.security.AuthenticatedUser;
 import be.intecbrussel.views.download.DownloadView;
 import be.intecbrussel.views.home.HomeView;
+import be.intecbrussel.views.upload.UploadUserVİew;
 import be.intecbrussel.views.upload.UploadView;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
@@ -129,13 +130,11 @@ public class MainLayout extends AppLayout {
     }
 
     private MenuItemInfo[] createMenuItems() {
-        return new MenuItemInfo[]{ //
+        return new MenuItemInfo[] { //
                 new MenuItemInfo("Home", "la la-home", HomeView.class), //
-
-                new MenuItemInfo("Upload", "la la-database", UploadView.class), //
-
+                new MenuItemInfo("Admin", "la la-database", UploadView.class), //
+                new MenuItemInfo("Upload", "la la-database", UploadUserVİew.class), //
                 new MenuItemInfo("Download", "la la-database", DownloadView.class), //
-
         };
     }
 
